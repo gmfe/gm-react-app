@@ -1596,17 +1596,17 @@
     unique-filename "^1.1.1"
     which "^1.3.1"
 
-"@gm-react-app/commitlint-gm-react-app@^3.4.8":
-  version "3.4.8"
-  resolved "https://registry.npm.taobao.org/@gm-react-app/commitlint-gm-react-app/download/@gm-react-app/commitlint-gm-react-app-3.4.8.tgz#20e8bcc1315919626a6dbffdbf7b2929637a270e"
-  integrity sha1-IOi8wTFZGWJqbb/9v3spKWN6Jw4=
+"@gm-react-app/commitlint-gm-react-app@^3.7.1":
+  version "3.7.1"
+  resolved "https://registry.yarnpkg.com/@gm-react-app/commitlint-gm-react-app/-/commitlint-gm-react-app-3.7.1.tgz#bf5d143ead4462be70c7d6c0aadf22046d67d8cd"
+  integrity sha512-kM6wUxaOhjyfbRL434zqW6tF5K7APqM/KWVdxDgjPHKFx3gJNTdzVBs/kCKjBTe0m+9pxbPqlxc7RaYAE9LP0g==
   dependencies:
     "@commitlint/config-conventional" "^11.0.0"
 
-"@gm-react-app/template@^3.4.8":
-  version "3.4.8"
-  resolved "https://registry.npm.taobao.org/@gm-react-app/template/download/@gm-react-app/template-3.4.8.tgz#85808802e33812b5d1f826cabfce0e9be19bfe9d"
-  integrity sha1-hYCIAuM4ErXR+CbKv84Om+Gb/p0=
+"@gm-react-app/template@^3.7.1":
+  version "3.7.1"
+  resolved "https://registry.yarnpkg.com/@gm-react-app/template/-/template-3.7.1.tgz#2d016236f0afb59628850b39b688f0ea3d5d132a"
+  integrity sha512-rNhLZVpeJ8XMAlMarTzVECLhlw0ms0L/n6NUQHJtMeQLUwVZdk/+cOvnhPwXiMeCJw0ER4Gu25bnk0IBMeO9qw==
   dependencies:
     art-template "^4.13.2"
     fs-extra "^9.0.1"
@@ -4041,10 +4041,10 @@ babel-plugin-transform-undefined-to-void@^6.9.4:
   resolved "https://registry.npm.taobao.org/babel-plugin-transform-undefined-to-void/download/babel-plugin-transform-undefined-to-void-6.9.4.tgz#be241ca81404030678b748717322b89d0c8fe280"
   integrity sha1-viQcqBQEAwZ4t0hxcyK4nQyP4oA=
 
-babel-preset-gm-react-app@^3.4.8:
-  version "3.4.8"
-  resolved "https://registry.npm.taobao.org/babel-preset-gm-react-app/download/babel-preset-gm-react-app-3.4.8.tgz#ec1ee6ce27d96ccb5fd6ef01cb96eb4d0ba6e74a"
-  integrity sha1-7B7mzifZbMtf1u8By5brTQum50o=
+babel-preset-gm-react-app@^3.7.1:
+  version "3.7.1"
+  resolved "https://registry.yarnpkg.com/babel-preset-gm-react-app/-/babel-preset-gm-react-app-3.7.1.tgz#2373f45b5f64e225528f219d608e0b1c833fd804"
+  integrity sha512-dFZRe3TpSLivLmmhRU55vJZncyM1Ph4Poo0Rl/q5JJThERE1jajLO3UNFL4ijt7FfIhFNjJRp8Dv6HiQZTpUUA==
   dependencies:
     "@babel/cli" "^7.10.5"
     "@babel/core" "^7.11.1"
@@ -6099,10 +6099,10 @@ eslint-plugin-es@^3.0.0:
     eslint-utils "^2.0.0"
     regexpp "^3.0.0"
 
-eslint-plugin-gm-react-app@^3.4.8:
-  version "3.4.8"
-  resolved "https://registry.npm.taobao.org/eslint-plugin-gm-react-app/download/eslint-plugin-gm-react-app-3.4.8.tgz#45b863917d1b9cb8fe0bc28bdf0ccd93f9ecfa14"
-  integrity sha1-RbhjkX0bnLj+C8KL3wzNk/ns+hQ=
+eslint-plugin-gm-react-app@^3.7.1:
+  version "3.7.1"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-gm-react-app/-/eslint-plugin-gm-react-app-3.7.1.tgz#af6aa95f9ed6dd5ed7fc0ed94bb58d6d6e4d16ec"
+  integrity sha512-CX7UFnTulg+feUlzrqjPsLoBTMiYS0qWK1vuNwC7xFzLCJloqGIfeAK5d1mynwbRgmjTEf6YSK5MiF0h2VxXTA==
   dependencies:
     "@typescript-eslint/eslint-plugin" "^2.27.0"
     "@typescript-eslint/parser" "^2.27.0"
@@ -6126,7 +6126,7 @@ eslint-plugin-gm-react-app@^3.4.8:
     jsx-ast-utils "^2.2.3"
     lodash "^4.17.19"
     prettier "^2.0.4"
-    ts-config-gm-react-app "^3.4.8"
+    ts-config-gm-react-app "^3.7.1"
     typescript "^3.8.3"
 
 eslint-plugin-import@^2.20.2:
@@ -7668,9 +7668,9 @@ inherits@2.0.3:
   integrity sha1-Yzwsg+PaQqUC9SRmAiSA9CCCYd4=
 
 ini@^1.3.2, ini@^1.3.4, ini@^1.3.5:
-  version "1.3.5"
-  resolved "https://registry.npm.taobao.org/ini/download/ini-1.3.5.tgz#eee25f56db1c9ec6085e0c22778083f596abf927"
-  integrity sha1-7uJfVtscnsYIXgwid4CD9Zar+Sc=
+  version "1.3.8"
+  resolved "https://registry.yarnpkg.com/ini/-/ini-1.3.8.tgz#a29da425b48806f34767a4efce397269af28432c"
+  integrity sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==
 
 init-package-json@^1.10.3:
   version "1.10.3"
@@ -12357,10 +12357,10 @@ trim-off-newlines@^1.0.0:
   resolved "https://registry.npm.taobao.org/trim-off-newlines/download/trim-off-newlines-1.0.1.tgz#9f9ba9d9efa8764c387698bcbfeb2c848f11adb3"
   integrity sha1-n5up2e+odkw4dpi8v+sshI8RrbM=
 
-ts-config-gm-react-app@^3.4.8:
-  version "3.4.8"
-  resolved "https://registry.npm.taobao.org/ts-config-gm-react-app/download/ts-config-gm-react-app-3.4.8.tgz#fe640360d4db9ccd0c6b41854c605159d84ce4e6"
-  integrity sha1-/mQDYNTbnM0Ma0GFTGBRWdhM5OY=
+ts-config-gm-react-app@^3.7.1:
+  version "3.7.1"
+  resolved "https://registry.yarnpkg.com/ts-config-gm-react-app/-/ts-config-gm-react-app-3.7.1.tgz#1c0f93ac6d539987048b3639e29b3e8de4e9973c"
+  integrity sha512-F3qZfq297uuA1zCJSSNca1185LcQOf/I547PVG4muixdacdxHLH7Ml4vfVtDX9ApgiMuFirkITOVPtky61r7qg==
 
 ts-dedent@^1.1.0:
   version "1.2.0"
