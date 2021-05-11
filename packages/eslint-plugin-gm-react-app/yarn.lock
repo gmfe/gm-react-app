@@ -1293,9 +1293,9 @@ lodash.get@^4.3.0:
   integrity sha1-LRd/ZS+jHpObRDjVNBSZ36OCXpk=
 
 lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19:
-  version "4.17.20"
-  resolved "https://registry.npm.taobao.org/lodash/download/lodash-4.17.20.tgz?cache=0&sync_timestamp=1597335994883&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Flodash%2Fdownload%2Flodash-4.17.20.tgz#b44a9b6297bcb698f1c51a3545a2b3b368d59c52"
-  integrity sha1-tEqbYpe8tpjxxRo1RaKzs2jVnFI=
+  version "4.17.21"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
+  integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
 
 log-symbols@4.0.0:
   version "4.0.0"
@@ -1996,10 +1996,10 @@ to-regex-range@^5.0.1:
   dependencies:
     is-number "^7.0.0"
 
-ts-config-gm-react-app@^3.4.5:
-  version "3.4.5"
-  resolved "https://registry.npm.taobao.org/ts-config-gm-react-app/download/ts-config-gm-react-app-3.4.5.tgz#082a267f788f7cf5b9abf4c95c4ec2c497c6884e"
-  integrity sha1-CComf3iPfPW5q/TJXE7CxJfGiE4=
+ts-config-gm-react-app@^3.7.6:
+  version "3.7.6"
+  resolved "https://registry.yarnpkg.com/ts-config-gm-react-app/-/ts-config-gm-react-app-3.7.6.tgz#e2e25e277d842c89e42adaaed79ca5a334ebc99d"
+  integrity sha512-94IXK0Ckd/TQG/uu8/eSX33qBjK/aXYsZm4G62azwfK+w9NTDafGIruCbyvg+wD3IAj9ZDEKuVS73Oc78j1/JQ==
 
 tsconfig-paths@^3.9.0:
   version "3.9.0"
