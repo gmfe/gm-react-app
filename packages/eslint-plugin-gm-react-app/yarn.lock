@@ -943,9 +943,9 @@ get-stdin@^6.0.0:
   integrity sha1-ngm/cSs2CrkiXoEgSPcf3pyJZXs=
 
 glob-parent@^5.0.0, glob-parent@~5.1.0:
-  version "5.1.1"
-  resolved "https://registry.npm.taobao.org/glob-parent/download/glob-parent-5.1.1.tgz#b6c1ef417c4e5663ea498f1c45afac6916bbc229"
-  integrity sha1-tsHvQXxOVmPqSY8cRa+saRa7wik=
+  version "5.1.2"
+  resolved "https://registry.yarnpkg.com/glob-parent/-/glob-parent-5.1.2.tgz#869832c58034fe68a4093c17dc15e8340d8401c4"
+  integrity sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==
   dependencies:
     is-glob "^4.0.1"
 
@@ -1122,7 +1122,7 @@ is-date-object@^1.0.1:
 
 is-extglob@^2.1.1:
   version "2.1.1"
-  resolved "https://registry.npm.taobao.org/is-extglob/download/is-extglob-2.1.1.tgz#a88c02535791f02ed37c76a1b9ea9773c833f8c2"
+  resolved "https://registry.yarnpkg.com/is-extglob/-/is-extglob-2.1.1.tgz#a88c02535791f02ed37c76a1b9ea9773c833f8c2"
   integrity sha1-qIwCU1eR8C7TfHahueqXc8gz+MI=
 
 is-fullwidth-code-point@^2.0.0:
@@ -1137,8 +1137,8 @@ is-fullwidth-code-point@^3.0.0:
 
 is-glob@^4.0.0, is-glob@^4.0.1, is-glob@~4.0.1:
   version "4.0.1"
-  resolved "https://registry.npm.taobao.org/is-glob/download/is-glob-4.0.1.tgz#7567dbe9f2f5e2467bc77ab83c4a29482407a5dc"
-  integrity sha1-dWfb6fL14kZ7x3q4PEopSCQHpdw=
+  resolved "https://registry.yarnpkg.com/is-glob/-/is-glob-4.0.1.tgz#7567dbe9f2f5e2467bc77ab83c4a29482407a5dc"
+  integrity sha512-5G0tKtBTFImOqDnLB2hG6Bp2qcKEFduo4tZu9MT/H6NQv/ghhy30o55ufafxJ/LdH79LLs2Kfrn85TLKyA7BUg==
   dependencies:
     is-extglob "^2.1.1"
 
@@ -1996,10 +1996,10 @@ to-regex-range@^5.0.1:
   dependencies:
     is-number "^7.0.0"
 
-ts-config-gm-react-app@^3.4.5:
-  version "3.4.5"
-  resolved "https://registry.npm.taobao.org/ts-config-gm-react-app/download/ts-config-gm-react-app-3.4.5.tgz#082a267f788f7cf5b9abf4c95c4ec2c497c6884e"
-  integrity sha1-CComf3iPfPW5q/TJXE7CxJfGiE4=
+ts-config-gm-react-app@^3.7.6:
+  version "3.7.6"
+  resolved "https://registry.yarnpkg.com/ts-config-gm-react-app/-/ts-config-gm-react-app-3.7.6.tgz#e2e25e277d842c89e42adaaed79ca5a334ebc99d"
+  integrity sha512-94IXK0Ckd/TQG/uu8/eSX33qBjK/aXYsZm4G62azwfK+w9NTDafGIruCbyvg+wD3IAj9ZDEKuVS73Oc78j1/JQ==
 
 tsconfig-paths@^3.9.0:
   version "3.9.0"
