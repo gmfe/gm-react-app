@@ -294,7 +294,7 @@ let config = {
     historyApiFallback: {
       index: appConfig.publicPath + 'index.html',
     },
-    host: '0.0.0.0',
+    host: appConfig.host || '0.0.0.0',
     port: appConfig.port || 8080,
     proxy: appConfig.proxy || {},
     https: appConfig.https || false,
