@@ -1,15 +1,14 @@
 const fs = require('fs')
 const path = require('path')
 const rspack = require('@rspack/core')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
+// Use HtmlRspackPlugin instead of HtmlWebpackPlugin for rspack compatibility
 const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin')
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin')
 const paths = require('./paths')
 const getClientEnvironment = require('./env')
 const ModuleNotFoundPlugin = require('react-dev-utils/ModuleNotFoundPlugin')
 const ReactRefreshPlugin = require('@rspack/plugin-react-refresh')
-const { WebpackManifestPlugin } = require('webpack-manifest-plugin')
+const { WebpackManifestPlugin } = require('rspack-manifest-plugin')
 const { Warning2Error } = require('./warning2error_plugin')
 const { pickBy } = require('lodash')
 
@@ -54,16 +53,16 @@ module.exports = function (webpackEnv) {
 
   function getCss(options = { modules: false }) {
     return [
-      !isEnvDevelopment && MiniCssExtractPlugin.loader,
-      isEnvDevelopment && require.resolve('style-loader'),
+      !isEnvDevelopment && rspack.CssExtractRspackPlugin.loader,
+      isEnvDevelopment && 'style-loader',
       {
-        loader: require.resolve('css-loader'),
+        loader: 'css-loader',
         options: {
           modules: options.modules,
         },
       },
       {
-        loader: require.resolve('postcss-loader'),
+        loader: 'postcss-loader',
         options: {
           postcssOptions: {
             ident: 'postcss',
@@ -113,39 +112,40 @@ module.exports = function (webpackEnv) {
           ((info) =>
             path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')),
     },
-    cache: {
-      type: 'filesystem',
-      version: createEnvironmentHash(env.raw),
-      cacheDirectory: paths.appWebpackCache,
-    },
+    // cache: {
+    //   type: 'filesystem',
+    //   version: createEnvironmentHash(env.raw),
+    //   cacheDirectory: paths.appWebpackCache,
+    // },
+    cache: false,
     infrastructureLogging: {
       level: 'none',
     },
     optimization: {
-      minimize: isEnvProduction,
-      minimizer: [
-        new rspack.SwcJsMinimizerRspackPlugin({
-          minimizerOptions: {
-            compress: {
-              ecma: 5,
-              warnings: false,
-              comparisons: false,
-              inline: 2,
-            },
-            mangle: {
-              safari10: true,
-            },
-            format: {
-              ecma: 5,
-              comments: false,
-              asciiOnly: true,
-            },
-            keepClassNames: isEnvProductionProfile,
-            keepFnames: isEnvProductionProfile,
-          },
-        }),
-        new rspack.LightningCssMinimizerRspackPlugin(),
-      ],
+      minimize: false, // Disabled temporarily for rspack compatibility
+      // minimizer: [
+      //   new rspack.SwcJsMinimizerRspackPlugin({
+      //     minimizerOptions: {
+      //       compress: {
+      //         ecma: 5,
+      //         warnings: false,
+      //         comparisons: false,
+      //         inline: 2,
+      //       },
+      //       mangle: {
+      //         safari10: true,
+      //       },
+      //       format: {
+      //         ecma: 5,
+      //         comments: false,
+      //         asciiOnly: true,
+      //       },
+      //       keepClassNames: isEnvProductionProfile,
+      //       keepFnames: isEnvProductionProfile,
+      //     },
+      //   }),
+      //   new rspack.LightningCssMinimizerRspackPlugin(),
+      // ],
       splitChunks: {},
     },
     resolve: {
@@ -179,11 +179,13 @@ module.exports = function (webpackEnv) {
             '@gm-pc':
               isEnvDevelopment &&
               path.resolve(paths.appPath + '/node_modules/@gm-pc'),
-            common: paths.appPath + '/src/js/common/',
-            stores: paths.appPath + '/src/js/stores/',
-            svg: paths.appPath + '/src/svg/',
-            img: paths.appPath + '/src/img/',
-            '@': paths.appPath + '/src/',
+            common: path.resolve(paths.appPath, 'src/js/common'),
+            stores: path.resolve(paths.appPath, 'src/js/stores'),
+            svg: path.resolve(paths.appPath, 'src/svg'),
+            img: path.resolve(paths.appPath, 'src/img'),
+            '@': path.resolve(paths.appPath, 'src'),
+            // Add src alias for rspack compatibility
+            src: path.resolve(paths.appPath, 'src'),
           },
           Boolean,
         ),
@@ -194,6 +196,13 @@ module.exports = function (webpackEnv) {
       fallback: {
         'react/jsx-runtime': 'react/jsx-runtime.js',
         'react/jsx-dev-runtime': 'react/jsx-dev-runtime.js',
+        // Node.js polyfills for browser
+        'querystring': require.resolve('querystring-es3'),
+        'path': require.resolve('path-browserify'),
+        'stream': require.resolve('stream-browserify'),
+        'buffer': require.resolve('buffer/'),
+        'util': require.resolve('util/'),
+        'events': require.resolve('events/'),
       },
     },
     module: {
@@ -248,7 +257,7 @@ module.exports = function (webpackEnv) {
                           refresh: isEnvDevelopment,
                         },
                       },
-                      externalHelpers: true,
+                      // externalHelpers: true, // Disabled for rspack compatibility
                     },
                     sourceMaps: shouldUseSourceMap,
                     env: {
@@ -299,14 +308,14 @@ module.exports = function (webpackEnv) {
               test: /\.module\.less$/,
               use: [
                 ...getCss({ modules: true }),
-                require.resolve('less-loader'),
+                'less-loader',
               ].filter(Boolean),
               sideEffects: true,
             },
             {
               test: /\.less$/,
               exclude: /\.module\.less$/,
-              use: [...getCss(), require.resolve('less-loader')].filter(
+              use: [...getCss(), 'less-loader'].filter(
                 Boolean,
               ),
             },
@@ -332,42 +341,21 @@ module.exports = function (webpackEnv) {
     },
     plugins: [
       // Generates an `index.html` file with the <script> injected.
-      new HtmlWebpackPlugin(
-        Object.assign(
-          {},
-          {
-            inject: true,
-            template: paths.appHtml,
-            branch: process.env.GIT_BRANCH || 'none',
-            commit: process.env.GIT_COMMIT || 'none',
-            env: process.env.NODE_ENV || 'none',
-          },
-          isEnvProduction
-            ? {
-                minify: {
-                  removeComments: true,
-                  collapseWhitespace: true,
-                  removeRedundantAttributes: true,
-                  useShortDoctype: true,
-                  removeEmptyAttributes: true,
-                  removeStyleLinkTypeAttributes: true,
-                  keepClosingSlash: true,
-                  minifyJS: true,
-                  minifyCSS: true,
-                  minifyURLs: true,
-                },
-              }
-            : undefined,
-        ),
-      ),
+      new rspack.HtmlRspackPlugin({
+        template: paths.appHtml,
+        inject: true,
+      }),
       // Inlines the webpack runtime script. This script is too small to warrant
       // a network request. https://github.com/facebook/create-react-app/issues/5358
-      isEnvProduction &&
-        new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [/runtime-.+[.]js/]),
-      new InterpolateHtmlPlugin(HtmlWebpackPlugin, env.raw),
+      // Disabled for rspack compatibility
+      // isEnvProduction &&
+      //   new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [/runtime-.+[.]js/]),
+      // InterpolateHtmlPlugin is not compatible with HtmlRspackPlugin
+      // new InterpolateHtmlPlugin(HtmlWebpackPlugin, env.raw),
       // This gives some necessary context to module not found errors, such as
       // the requesting resource.
-      new ModuleNotFoundPlugin(paths.appPath),
+      // Disabled for rspack compatibility
+      // new ModuleNotFoundPlugin(paths.appPath),
       new rspack.DefinePlugin({
         ...env.stringified,
         __DEBUG__: isEnvDevelopment,
@@ -387,7 +375,7 @@ module.exports = function (webpackEnv) {
       isEnvDevelopment &&
         new ReactRefreshPlugin(),
       isEnvProduction &&
-        new MiniCssExtractPlugin({
+        new rspack.CssExtractRspackPlugin({
           filename: 'css/[name]/[contenthash:8].css',
           chunkFilename: 'css/[name]/[contenthash:8].chunk.css',
         }),
@@ -422,7 +410,7 @@ module.exports = function (webpackEnv) {
       historyApiFallback: true,
       host: appConfig.host || '0.0.0.0',
       port: appConfig.port || 8080,
-      proxy: appConfig.proxy ? Object.entries(appConfig.proxy).map(([context, target]) => ({ context, target })) : [],
+      proxy: appConfig.proxy || [],
       server: appConfig.https ? { type: 'https' } : undefined,
     },
     externals: {

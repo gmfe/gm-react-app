@@ -22,7 +22,7 @@
     "build:test": "gras test",
     "build:prod": "gras build",
     "version": "lerna version --force-publish --yes",
-    "release": "bumpp && npm run version"
+    "release": "bumpp"
   },
   "lint-staged": {
     "./src/**/*.{js,json}": [
