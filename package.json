@@ -20,7 +20,8 @@
     "publish-beta": "lerna publish --force-publish --dist-tag beta --preid beta --registry https://registry.npmjs.org/",
     "start": "gras start",
     "build:test": "gras test",
-    "build:prod": "gras build"
+    "build:prod": "gras build",
+    "version": "lerna version --force-publish --yes"
   },
   "lint-staged": {
     "./src/**/*.{js,json}": [
