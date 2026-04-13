@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="renderer" content="webkit" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <script>
+      var __platform = 'my-project'
+      var ____fe_branch = '<%= htmlWebpackPlugin.options.branch %>'
+      var ____git_commit = '<%= htmlWebpackPlugin.options.commit %>'
+    </script>
+    <% if(htmlWebpackPlugin.options.env === 'development') { %>
+    <script>
+      var g_group_id = 0
+    </script>
+    <% } %>
+    <% if(htmlWebpackPlugin.options.env === 'production') { %>
+    <script>
+      var g_group_id = Number('{{partner_id}}')
+    </script>
+    <% } %>
+  </head>
+  <body>
+    <div id="appContainer"></div>
+    <script
+      type="text/javascript"
+      src="//js.guanmai.cn/build/libs/babel-polyfill/7.4.4/dist/polyfill.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="//js.guanmai.cn/build/libs/gm-fetch/2.0.1/gm-fetch.min.js"
+    ></script>
+  </body>
+</html>

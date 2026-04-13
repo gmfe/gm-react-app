@@ -1,22 +1,16 @@
 const fs = require('fs')
 const path = require('path')
-const webpack = require('webpack')
+const rspack = require('@rspack/core')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
 const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin')
-const TerserPlugin = require('terser-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
-const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
-const { WebpackManifestPlugin } = require('webpack-manifest-plugin')
 const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin')
 const paths = require('./paths')
 const getClientEnvironment = require('./env')
 const ModuleNotFoundPlugin = require('react-dev-utils/ModuleNotFoundPlugin')
-const ProgressBarPlugin = require('progress-bar-webpack-plugin')
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
+const ReactRefreshPlugin = require('@rspack/plugin-react-refresh')
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin')
 const { Warning2Error } = require('./warning2error_plugin')
-
-const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin')
 const { pickBy } = require('lodash')
 
 const createEnvironmentHash = require('./webpack/persistentCache/createEnvironmentHash')
@@ -123,14 +117,6 @@ module.exports = function (webpackEnv) {
       type: 'filesystem',
       version: createEnvironmentHash(env.raw),
       cacheDirectory: paths.appWebpackCache,
-      store: 'pack',
-      buildDependencies: {
-        defaultWebpack: ['webpack/lib/'],
-        config: [__filename],
-        tsconfig: [paths.appTsConfig, paths.appJsConfig].filter((f) =>
-          fs.existsSync(f),
-        ),
-      },
     },
     infrastructureLogging: {
       level: 'none',
@@ -138,67 +124,29 @@ module.exports = function (webpackEnv) {
     optimization: {
       minimize: isEnvProduction,
       minimizer: [
-        new TerserPlugin({
-          terserOptions: {
-            parse: {
-              // We want terser to parse ecma 8 code. However, we don't want it
-              // to apply any minification steps that turns valid ecma 5 code
-              // into invalid ecma 5 code. This is why the 'compress' and 'output'
-              // sections only apply transformations that are ecma 5 safe
-              // https://github.com/facebook/create-react-app/pull/4234
-              ecma: 8,
-            },
+        new rspack.SwcJsMinimizerRspackPlugin({
+          minimizerOptions: {
             compress: {
               ecma: 5,
               warnings: false,
-              // Disabled because of an issue with Uglify breaking seemingly valid code:
-              // https://github.com/facebook/create-react-app/issues/2376
-              // Pending further investigation:
-              // https://github.com/mishoo/UglifyJS2/issues/2011
               comparisons: false,
-              // Disabled because of an issue with Terser breaking valid code:
-              // https://github.com/facebook/create-react-app/issues/5250
-              // Pending further investigation:
-              // https://github.com/terser-js/terser/issues/120
               inline: 2,
             },
             mangle: {
               safari10: true,
             },
-            // Added for profiling in devtools
-            keep_classnames: isEnvProductionProfile,
-            keep_fnames: isEnvProductionProfile,
-            output: {
+            format: {
               ecma: 5,
               comments: false,
-              // Turned on because emoji and regex is not minified properly using default
-              ascii_only: true,
+              asciiOnly: true,
             },
+            keepClassNames: isEnvProductionProfile,
+            keepFnames: isEnvProductionProfile,
           },
         }),
-        new CssMinimizerPlugin(),
+        new rspack.LightningCssMinimizerRspackPlugin(),
       ],
-      splitChunks: {
-        //   automaticNameDelimiter: '.',
-        //   minSize: 50000,
-        //   maxAsyncRequests: 4,
-        //   maxInitialRequests: 3,
-        //   usedExports: true,
-        //   cacheGroups: {
-        //     common_base: {
-        //       test: /\/node_modules\/(react|react-dom|prop-types|lodash|moment|mobx|mobx-react|mobx-react-lite)\//,
-        //       priority: 10,
-        //       reuseExistingChunk: true,
-        //     },
-        //     common_chunk: {
-        //       test: paths.appSrc,
-        //       minChunks: 3,
-        //       priority: 10,
-        //       reuseExistingChunk: true,
-        //     },
-        //   },
-      },
-      // runtimeChunk: true,
+      splitChunks: {},
     },
     resolve: {
       modules: ['node_modules', paths.appNodeModules],
@@ -240,28 +188,16 @@ module.exports = function (webpackEnv) {
           Boolean,
         ),
       },
-      plugins: [
-        new TsconfigPathsPlugin({
-          configFile: paths.appPath + '/tsconfig.json',
-        }),
-      ],
+      tsConfigPath: fs.existsSync(paths.appTsConfig)
+        ? paths.appTsConfig
+        : undefined,
       fallback: {
         'react/jsx-runtime': 'react/jsx-runtime.js',
         'react/jsx-dev-runtime': 'react/jsx-dev-runtime.js',
       },
     },
     module: {
-      // Repalce error with warning when export is not found
-      // strictExportPresence: true,
       rules: [
-        // Handle node_modules packages that contain sourcemaps
-        shouldUseSourceMap && {
-          enforce: 'pre',
-          exclude: /@babel(?:\/|\\{1,2})runtime/,
-          // include: commonInclude,
-          test: /\.(js|mjs|jsx|ts|tsx|css)$/,
-          loader: require.resolve('source-map-loader'),
-        },
         {
           oneOf: [
             {
@@ -295,31 +231,29 @@ module.exports = function (webpackEnv) {
             {
               test: /\.(js|mjs|jsx|ts|tsx)$/,
               include: commonInclude,
-              // exclude: /@babel\/runtime/,
               use: [
-                // { loader: require.resolve('thread-loader') }, // @sentry/webpack-plugin不支持
                 {
-                  loader: require.resolve('babel-loader'),
+                  loader: 'builtin:swc-loader',
                   options: {
-                    customize: require.resolve(
-                      'babel-preset-react-app/webpack-overrides',
-                    ),
-                    presets: [
-                      [
-                        require.resolve('babel-preset-react-app'),
-                        {
+                    jsc: {
+                      parser: {
+                        syntax: 'typescript',
+                        tsx: true,
+                        dynamicImport: true,
+                        decorators: true,
+                      },
+                      transform: {
+                        react: {
                           runtime: hasJsxRuntime ? 'automatic' : 'classic',
+                          refresh: isEnvDevelopment,
                         },
-                      ],
-                    ],
-                    plugins: [
-                      isEnvDevelopment &&
-                        require.resolve('react-refresh/babel'),
-                    ].filter(Boolean),
-                    cacheDirectory: true,
-                    // See #6846 for context on why cacheCompression is disabled
-                    cacheCompression: false,
-                    compact: isEnvProduction,
+                      },
+                      externalHelpers: true,
+                    },
+                    sourceMaps: shouldUseSourceMap,
+                    env: {
+                      targets: 'chrome 61',
+                    },
                   },
                 },
               ],
@@ -328,43 +262,29 @@ module.exports = function (webpackEnv) {
             {
               test: /\.(js|mjs)$/,
               include: commonInclude,
-              // exclude: /@babel(?:\/|\\{1,2})runtime/,
               use: [
-                // { loader: require.resolve('thread-loader') }, // @sentry/webpack-plugin不支持
                 {
-                  loader: require.resolve('babel-loader'),
+                  loader: 'builtin:swc-loader',
                   options: {
-                    babelrc: false,
-                    configFile: false,
-                    compact: false,
-                    presets: [
-                      [
-                        require.resolve('babel-preset-react-app/dependencies'),
-                        { helpers: true },
-                      ],
-                    ],
-                    cacheDirectory: true,
-                    // See #6846 for context on why cacheCompression is disabled
-                    cacheCompression: false,
-
-                    // Babel sourcemaps are needed for debugging into node_modules
-                    // code.  Without the options below, debuggers like VSCode
-                    // show incorrect code and set breakpoints on the wrong lines.
+                    jsc: {
+                      parser: {
+                        syntax: 'ecmascript',
+                        jsx: false,
+                      },
+                      transform: {
+                        react: {
+                          runtime: hasJsxRuntime ? 'automatic' : 'classic',
+                        },
+                      },
+                    },
                     sourceMaps: shouldUseSourceMap,
-                    inputSourceMap: shouldUseSourceMap,
+                    env: {
+                      targets: 'chrome 61',
+                    },
                   },
                 },
               ],
             },
-            // {
-            //   test: /\.(js|ts|tsx)$/,
-            //   use: [
-            //     {
-            //       loader: require.resolve('swc-loader'),
-            //     },
-            //   ],
-            //   include: commonInclude,
-            // },
             {
               test: /\.module\.css$/,
               use: [...getCss({ modules: true })].filter(Boolean),
@@ -448,7 +368,7 @@ module.exports = function (webpackEnv) {
       // This gives some necessary context to module not found errors, such as
       // the requesting resource.
       new ModuleNotFoundPlugin(paths.appPath),
-      new webpack.DefinePlugin({
+      new rspack.DefinePlugin({
         ...env.stringified,
         __DEBUG__: isEnvDevelopment,
         __DEVELOPMENT__: isEnvDevelopment,
@@ -465,21 +385,16 @@ module.exports = function (webpackEnv) {
           '/index\\.page\\./',
       }),
       isEnvDevelopment &&
-        new ReactRefreshWebpackPlugin({
-          overlay: false,
-        }),
-      isEnvDevelopment && new CaseSensitivePathsPlugin(),
+        new ReactRefreshPlugin(),
       isEnvProduction &&
         new MiniCssExtractPlugin({
           filename: 'css/[name]/[contenthash:8].css',
           chunkFilename: 'css/[name]/[contenthash:8].chunk.css',
         }),
-      // Generate an asset manifest file with the following content:
-      // - "files" key: Mapping of all asset filenames to their corresponding
-      //   output file so that tools can pick it up without having to parse
-      //   `index.html`
-      // - "entrypoints" key: Array of files which are included in `index.html`,
-      //   can be used to reconstruct the HTML if necessary
+      new rspack.IgnorePlugin({
+        resourceRegExp: /^\.\/locale$/,
+        contextRegExp: /moment$/,
+      }),
       new WebpackManifestPlugin({
         fileName: 'asset-manifest.json',
         publicPath: paths.publicUrlOrPath,
@@ -498,12 +413,7 @@ module.exports = function (webpackEnv) {
           }
         },
       }),
-      new webpack.IgnorePlugin({
-        resourceRegExp: /^\.\/locale$/,
-        contextRegExp: /moment$/,
-      }),
-      new ProgressBarPlugin(),
-      new Warning2Error()
+      new Warning2Error(),
     ].filter(Boolean),
     // Turn off performance processing because we utilize
     // our own hints via the FileSizeReporter
@@ -512,8 +422,8 @@ module.exports = function (webpackEnv) {
       historyApiFallback: true,
       host: appConfig.host || '0.0.0.0',
       port: appConfig.port || 8080,
-      proxy: appConfig.proxy || {},
-      https: appConfig.https || false,
+      proxy: appConfig.proxy ? Object.entries(appConfig.proxy).map(([context, target]) => ({ context, target })) : [],
+      server: appConfig.https ? { type: 'https' } : undefined,
     },
     externals: {
       'gm-i18n': 'gmI18n',

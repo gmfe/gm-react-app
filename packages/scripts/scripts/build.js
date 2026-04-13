@@ -18,7 +18,7 @@ const path = require('path');
 const chalk = require('react-dev-utils/chalk');
 const fs = require('fs-extra');
 const bfj = require('bfj');
-const webpack = require('webpack');
+const rspack = require('@rspack/core');
 const configFactory = require('../config/webpack.config');
 const paths = require('../config/paths');
 const checkRequiredFiles = require('react-dev-utils/checkRequiredFiles');
@@ -64,7 +64,7 @@ checkBrowsers(paths.appPath, isInteractive)
     fs.emptyDirSync(paths.appBuild);
     // Merge with the public folder
     copyPublicFolder();
-    // Start the webpack build
+    // Start the rspack build
     return build(previousFileSizes);
   })
   .then(
@@ -134,7 +134,7 @@ checkBrowsers(paths.appPath, isInteractive)
 function build(previousFileSizes) {
   console.log('Creating an optimized production build...');
 
-  const compiler = webpack(config);
+  const compiler = rspack(config);
   return new Promise((resolve, reject) => {
     compiler.run((err, stats) => {
       let messages;
@@ -169,26 +169,6 @@ function build(previousFileSizes) {
         }
         return reject(new Error(messages.errors.join('\n\n')));
       }
-      // if (
-      //   process.env.CI &&
-      //   (typeof process.env.CI !== 'string' ||
-      //     process.env.CI.toLowerCase() !== 'false') &&
-      //   messages.warnings.length
-      // ) {
-      //   // Ignore sourcemap warnings in CI builds. See #8227 for more info.
-      //   const filteredWarnings = messages.warnings.filter(
-      //     w => !/Failed to parse source map/.test(w)
-      //   );
-      //   if (filteredWarnings.length) {
-      //     console.log(
-      //       chalk.yellow(
-      //         '\nTreating warnings as errors because process.env.CI = true.\n' +
-      //           'Most CI servers set it automatically.\n'
-      //       )
-      //     );
-      //     return reject(new Error(filteredWarnings.join('\n\n')));
-      //   }
-      // }
 
       const resolveArgs = {
         stats,

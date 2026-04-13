@@ -1,4 +1,4 @@
-const { Compiler } = require("webpack")
+const { Compiler } = require("@rspack/core")
 
 /** 将指定消息的warning提升为error */
 class Warning2Error {
