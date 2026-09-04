@@ -65,7 +65,9 @@
     "eslint-config-react-app": "^7.0.1",
     "fs": "0.0.2",
     "fs-extra": "^10.0.0",
+    "html-rspack-plugin": "^6.1.0",
     "html-webpack-plugin": "^5.5.0",
+    "url": "^0.11.4",
     "husky": "^4.3.8",
     "identity-obj-proxy": "^3.0.0",
     "inquirer": "^7.0.0",
@@ -100,7 +102,8 @@
     "tailwindcss": "^2.0.2",
     "typescript": "^4.7.4",
     "web-vitals": "^2.1.0",
-    "webpack-manifest-plugin": "^4.0.2"
+    "webpack-manifest-plugin": "^4.0.2",
+    "rspack-manifest-plugin": "^5.2.1"
   },
   "peerDependencies": {
     "react": "^16.12.0",

@@ -38,6 +38,25 @@ const WARN_AFTER_CHUNK_GZIP_SIZE = 1024 * 1024;
 
 const isInteractive = process.stdout.isTTY;
 
+/** 脚本进程启动时刻 */
+const SCRIPT_STARTED_AT = Date.now();
+
+function formatDuration(ms) {
+  if (ms == null || Number.isNaN(ms)) {
+    return 'n/a';
+  }
+  if (ms < 1000) {
+    return `${ms}ms`;
+  }
+  return `${(ms / 1000).toFixed(2)}s`;
+}
+
+function printTiming(label, ms) {
+  console.log(
+    chalk.cyan(`[timing] ${label}: `) + chalk.bold(formatDuration(ms))
+  );
+}
+
 // Warn and crash if required files are missing
 if (!checkRequiredFiles([paths.appHtml, paths.appIndexJs])) {
   process.exit(1);
@@ -68,7 +87,7 @@ checkBrowsers(paths.appPath, isInteractive)
     return build(previousFileSizes);
   })
   .then(
-    ({ stats, previousFileSizes, warnings }) => {
+    ({ stats, previousFileSizes, warnings, compileMs, totalMs }) => {
       if (warnings.length) {
         console.log(chalk.yellow('Compiled with warnings.\n'));
         console.log(warnings.join('\n\n'));
@@ -85,6 +104,10 @@ checkBrowsers(paths.appPath, isInteractive)
       } else {
         console.log(chalk.green('Compiled successfully.\n'));
       }
+
+      printTiming('Rspack 编译(compile)', compileMs);
+      printTiming('打包合计(yarn build → 完成)', totalMs);
+      console.log();
 
       console.log('File sizes after gzip:\n');
       printFileSizesAfterBuild(
@@ -134,9 +157,16 @@ checkBrowsers(paths.appPath, isInteractive)
 function build(previousFileSizes) {
   console.log('Creating an optimized production build...');
 
+  const compileStartedAt = Date.now();
   const compiler = rspack(config);
   return new Promise((resolve, reject) => {
     compiler.run((err, stats) => {
+      const totalMs = Date.now() - SCRIPT_STARTED_AT;
+      const compileMs =
+        stats && stats.endTime != null && stats.startTime != null
+          ? stats.endTime - stats.startTime
+          : Date.now() - compileStartedAt;
+
       let messages;
       if (err) {
         if (!err.message) {
@@ -174,6 +204,8 @@ function build(previousFileSizes) {
         stats,
         previousFileSizes,
         warnings: messages.warnings,
+        compileMs,
+        totalMs,
       };
 
       if (writeStatsJson) {

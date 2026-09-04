@@ -59,22 +59,25 @@ const getConfig = () => {
   return config
 }
 
-// query-string swiper dom7 比较坑爹，里面用了 const
+// 仅编译 src + 需要转译的依赖；正则必须限定在 node_modules，
+// 否则 /gm_/ 会误匹配项目目录名（如 gm_static_stationv2），把整个 node_modules 都打进 babel。
+const nm = (name) => new RegExp(`[\\\\/]node_modules[\\\\/]${name}([\\\\/]|$)`)
 const commonInclude = [
   paths.appSrc,
-  /gm_api/,
-  /gm-/,
-  /@gm-/,
-  /gm_/,
-  /gmfe/,
-  /gm_static_storage/,
-  /react-mgm/,
-  /react-gm/,
-  /query-string/,
-  /split-on-first/,
-  /strict-uri-encode/,
-  /swiper/,
-  /dom7/,
+  nm('gm_api'),
+  nm('gm-[^\\\\/]+'),
+  nm('@gm-[^\\\\/]+'),
+  nm('gm_[^\\\\/]+'),
+  nm('gmfe'),
+  nm('@gmfe'),
+  nm('gm_static_storage'),
+  nm('react-mgm'),
+  nm('react-gm'),
+  nm('query-string'),
+  nm('split-on-first'),
+  nm('strict-uri-encode'),
+  nm('swiper'),
+  nm('dom7'),
 ]
 
 const packageJson = JSON.parse(fs.readFileSync(paths.appPackageJson))

@@ -34,6 +34,25 @@ const createDevServerConfig = require('../config/webpackDevServer.config');
 const getClientEnvironment = require('../config/env');
 const react = require(require.resolve('react', { paths: [paths.appPath] }));
 
+/** 脚本进程启动时刻（含读配置 / 选端口之前） */
+const SCRIPT_STARTED_AT = Date.now();
+
+function formatDuration(ms) {
+  if (ms == null || Number.isNaN(ms)) {
+    return 'n/a';
+  }
+  if (ms < 1000) {
+    return `${ms}ms`;
+  }
+  return `${(ms / 1000).toFixed(2)}s`;
+}
+
+function printTiming(label, ms) {
+  console.log(
+    chalk.cyan(`[timing] ${label}: `) + chalk.bold(formatDuration(ms))
+  );
+}
+
 const env = getClientEnvironment(paths.publicUrlOrPath.slice(0, -1));
 const useYarn = fs.existsSync(paths.yarnLockFile);
 const isInteractive = process.stdout.isTTY;
@@ -100,6 +119,33 @@ checkBrowsers(paths.appPath, isInteractive)
       useTypeScript,
       webpack: rspack,
     });
+
+    let isFirstCompile = true;
+    let serverReadyAt = null;
+    compiler.hooks.done.tap('GMDevTiming', (stats) => {
+      const compileMs =
+        stats.endTime != null && stats.startTime != null
+          ? stats.endTime - stats.startTime
+          : null;
+
+      if (isFirstCompile) {
+        printTiming('首次编译(Rspack compile)', compileMs);
+        printTiming(
+          '冷启动合计(yarn start → 首次编译完成)',
+          Date.now() - SCRIPT_STARTED_AT
+        );
+        if (serverReadyAt != null) {
+          printTiming(
+            '其中 DevServer 监听就绪',
+            serverReadyAt - SCRIPT_STARTED_AT
+          );
+        }
+        isFirstCompile = false;
+      } else {
+        printTiming('增量编译(Rspack compile)', compileMs);
+      }
+    });
+
     const proxySetting = require(paths.appPackageJson).proxy;
     const proxyConfig = prepareProxy(
       proxySetting,
@@ -116,6 +162,7 @@ checkBrowsers(paths.appPath, isInteractive)
     const devServer = new RspackDevServer(serverConfig, compiler);
     // Launch RspackDevServer.
     devServer.startCallback(() => {
+      serverReadyAt = Date.now();
       if (isInteractive) {
         clearConsole();
       }
@@ -128,23 +175,37 @@ checkBrowsers(paths.appPath, isInteractive)
         );
       }
 
+      // 注意：首次编译完成时 createCompiler 会 clearConsole，此处日志可能被清掉；
+      // 完整耗时以 hooks.done 里的 [timing] 为准。
       console.log(chalk.cyan('Starting the development server...\n'));
       openBrowser(urls.localUrlForBrowser);
     });
 
-    ['SIGINT', 'SIGTERM'].forEach(function (sig) {
-      process.on(sig, function () {
-        devServer.close();
-        process.exit();
-      });
-    });
+    const stopDevServer = () => {
+      // rspack-dev-server 1.x 用 stop；兼容旧 webpack-dev-server 的 close
+      const stop =
+        typeof devServer.stop === 'function'
+          ? () => devServer.stop()
+          : typeof devServer.close === 'function'
+            ? () =>
+                new Promise((resolve) => {
+                  devServer.close(resolve)
+                })
+            : () => Promise.resolve()
+      Promise.resolve(stop())
+        .catch(() => {})
+        .finally(() => {
+          process.exit()
+        })
+    }
+
+    ;['SIGINT', 'SIGTERM'].forEach(function (sig) {
+      process.on(sig, stopDevServer)
+    })
 
     if (process.env.CI !== 'true') {
       // Gracefully exit when stdin ends
-      process.stdin.on('end', function () {
-        devServer.close();
-        process.exit();
-      });
+      process.stdin.on('end', stopDevServer)
     }
   })
   .catch(err => {

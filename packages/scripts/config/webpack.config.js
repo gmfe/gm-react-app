@@ -1,7 +1,9 @@
 const fs = require('fs')
 const path = require('path')
 const rspack = require('@rspack/core')
-// Use HtmlRspackPlugin instead of HtmlWebpackPlugin for rspack compatibility
+// html-rspack-plugin：兼容 html-webpack-plugin 模板语法，且适配 Rspack 子编译
+// （html-webpack-plugin 在 Rspack 下会报 __webpack_modules__[moduleId] is not a function）
+const HtmlWebpackPlugin = require('html-rspack-plugin')
 const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin')
 const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin')
 const paths = require('./paths')
@@ -11,6 +13,10 @@ const ReactRefreshPlugin = require('@rspack/plugin-react-refresh')
 const { WebpackManifestPlugin } = require('rspack-manifest-plugin')
 const { Warning2Error } = require('./warning2error_plugin')
 const { pickBy } = require('lodash')
+
+const hasTailwindConfig =
+  fs.existsSync(path.join(paths.appPath, 'tailwind.config.js')) ||
+  fs.existsSync(path.join(paths.appPath, 'tailwind.config.cjs'))
 
 const createEnvironmentHash = require('./webpack/persistentCache/createEnvironmentHash')
 
@@ -52,6 +58,14 @@ module.exports = function (webpackEnv) {
   const env = getClientEnvironment(paths.publicUrlOrPath.slice(0, -1))
 
   function getCss(options = { modules: false }) {
+    const postcssPlugins = [
+      hasTailwindConfig && require('tailwindcss'),
+      // 强制用业务项目/根依赖的 preset-env，避免解析到 precss 自带的旧版
+      require(require.resolve('postcss-preset-env', { paths: [paths.appPath] }))({
+        stage: 3,
+      }),
+    ].filter(Boolean)
+
     return [
       !isEnvDevelopment && rspack.CssExtractRspackPlugin.loader,
       isEnvDevelopment && 'style-loader',
@@ -65,18 +79,55 @@ module.exports = function (webpackEnv) {
         loader: 'postcss-loader',
         options: {
           postcssOptions: {
-            ident: 'postcss',
-            plugins: [
-              require('tailwindcss'),
-              require('postcss-preset-env')({
-                stage: 3,
-              }),
-            ],
+            // 禁止从依赖包自动读 postcss 配置（会拉到 precss 旧 autoprefixer）
+            config: false,
+            plugins: postcssPlugins,
           },
         },
       },
     ]
   }
+
+  const lessLoader = {
+    loader: require.resolve('less-loader'),
+    options: {
+      lessOptions: {
+        // Less 4 默认不自动算表达式，存量业务依赖 Less 3 行为
+        math: 'always',
+        javascriptEnabled: true,
+        // 【过渡方案】Less 4.9+ 对 Less3 mixin 写法刷 DEPRECATED。
+        // 根因是业务/依赖里仍用 `.mixin;` / `.fn (@x)`；要根治需改 less 源码或升依赖，
+        // 不是关掉告警。在未批量改样式前先静默，避免淹没真实错误。
+        quietDeprecations: true,
+      },
+    },
+  }
+
+  // 【过渡方案】过滤 Less logger 的已知无害告警（仍会漏到控制台 LOG）。
+  // 典型：@gmfe/react tree_v2 里 :extend(.gm-tree-v2-list-item-expand) 因嵌套选择器匹配不到。
+  // 根治应改 @gmfe/react 对应 less（需单独开分支），此处仅压制噪音。
+  try {
+    const lessImpl = require('less')
+    if (lessImpl?.logger?.warn && !lessImpl.logger.__gmFilteredWarn) {
+      const originalWarn = lessImpl.logger.warn.bind(lessImpl.logger)
+      lessImpl.logger.warn = (msg) => {
+        const text = String(msg || '')
+        if (
+          text.includes('DEPRECATED WARNING') ||
+          text.includes('has no matches')
+        ) {
+          return
+        }
+        originalWarn(msg)
+      }
+      lessImpl.logger.__gmFilteredWarn = true
+    }
+  } catch (_) {
+    // less 未安装时忽略
+  }
+
+  const rawHtmlTemplate = fs.readFileSync(paths.appHtml, 'utf8')
+  const compileHtmlTemplate = require('lodash/template')(rawHtmlTemplate)
 
   let config = {
     target: ['browserslist'],
@@ -186,6 +237,8 @@ module.exports = function (webpackEnv) {
             '@': path.resolve(paths.appPath, 'src'),
             // Add src alias for rspack compatibility
             src: path.resolve(paths.appPath, 'src'),
+            // npm 包 path@0.12 会抢解析且依赖 process，浏览器端必须强制走 path-browserify
+            path: require.resolve('path-browserify'),
           },
           Boolean,
         ),
@@ -203,6 +256,8 @@ module.exports = function (webpackEnv) {
         'buffer': require.resolve('buffer/'),
         'util': require.resolve('util/'),
         'events': require.resolve('events/'),
+        'url': require.resolve('url/'),
+        'process': require.resolve('process/browser'),
       },
     },
     module: {
@@ -236,60 +291,22 @@ module.exports = function (webpackEnv) {
                 },
               ],
             },
-            // The preset includes JSX, Flow, TypeScript, and some ESnext features.
+            // 使用 babel-loader：存量业务/组件库大量使用 :: bind 运算符，SWC 不支持
             {
               test: /\.(js|mjs|jsx|ts|tsx)$/,
               include: commonInclude,
-              use: [
-                {
-                  loader: 'builtin:swc-loader',
-                  options: {
-                    jsc: {
-                      parser: {
-                        syntax: 'typescript',
-                        tsx: true,
-                        dynamicImport: true,
-                        decorators: true,
-                      },
-                      transform: {
-                        react: {
-                          runtime: hasJsxRuntime ? 'automatic' : 'classic',
-                          refresh: isEnvDevelopment,
-                        },
-                      },
-                      // externalHelpers: true, // Disabled for rspack compatibility
-                    },
-                    sourceMaps: shouldUseSourceMap,
-                    env: {
-                      targets: 'chrome 61',
-                    },
-                  },
-                },
+              exclude: [
+                /@babel[\\/]runtime/,
+                /core-js/,
+                /core-js-pure/,
               ],
-            },
-            // Unlike the application JS, we only compile the standard ES features.
-            {
-              test: /\.(js|mjs)$/,
-              include: commonInclude,
               use: [
                 {
-                  loader: 'builtin:swc-loader',
+                  loader: require.resolve('babel-loader'),
                   options: {
-                    jsc: {
-                      parser: {
-                        syntax: 'ecmascript',
-                        jsx: false,
-                      },
-                      transform: {
-                        react: {
-                          runtime: hasJsxRuntime ? 'automatic' : 'classic',
-                        },
-                      },
-                    },
-                    sourceMaps: shouldUseSourceMap,
-                    env: {
-                      targets: 'chrome 61',
-                    },
+                    cacheDirectory: true,
+                    cacheCompression: false,
+                    compact: !isEnvDevelopment,
                   },
                 },
               ],
@@ -308,22 +325,20 @@ module.exports = function (webpackEnv) {
               test: /\.module\.less$/,
               use: [
                 ...getCss({ modules: true }),
-                'less-loader',
+                lessLoader,
               ].filter(Boolean),
               sideEffects: true,
             },
             {
               test: /\.less$/,
               exclude: /\.module\.less$/,
-              use: [...getCss(), 'less-loader'].filter(
-                Boolean,
-              ),
+              use: [...getCss(), lessLoader].filter(Boolean),
             },
-            // 作为字符串引入
+            // 作为字符串引入（勿走 css/postcss，避免与 asset/source 冲突）
             {
               test: /\.(lesss|csss)$/,
               type: 'asset/source',
-              use: ['less-loader'],
+              use: [lessLoader],
             },
             {
               exclude: [/^$/, /\.(js|mjs|jsx|ts|tsx)$/, /\.html$/, /\.json$/],
@@ -340,17 +355,20 @@ module.exports = function (webpackEnv) {
       ].filter(Boolean),
     },
     plugins: [
-      // Generates an `index.html` file with the <script> injected.
-      new rspack.HtmlRspackPlugin({
-        template: paths.appHtml,
+      // 用 templateContent + lodash.template，绕过 Rspack 子编译 HTML（避免 __webpack_modules__ 报错）
+      new HtmlWebpackPlugin({
         inject: true,
+        templateContent: (params) => compileHtmlTemplate(params),
+        // 兼容业务模板中的 htmlWebpackPlugin.options.*
+        env: process.env.NODE_ENV,
+        branch: process.env.GIT_BRANCH || 'none',
+        commit: process.env.GIT_COMMIT || 'none',
       }),
       // Inlines the webpack runtime script. This script is too small to warrant
       // a network request. https://github.com/facebook/create-react-app/issues/5358
       // Disabled for rspack compatibility
       // isEnvProduction &&
       //   new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [/runtime-.+[.]js/]),
-      // InterpolateHtmlPlugin is not compatible with HtmlRspackPlugin
       // new InterpolateHtmlPlugin(HtmlWebpackPlugin, env.raw),
       // This gives some necessary context to module not found errors, such as
       // the requesting resource.
@@ -371,6 +389,10 @@ module.exports = function (webpackEnv) {
           CUSTOM_AUTO_ROUTER_REG_ ||
           appConfig.autoRouterReg ||
           '/index\\.page\\./',
+      }),
+      new rspack.ProvidePlugin({
+        process: [require.resolve('process/browser')],
+        Buffer: ['buffer', 'Buffer'],
       }),
       isEnvDevelopment &&
         new ReactRefreshPlugin(),
