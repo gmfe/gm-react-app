@@ -3,7 +3,7 @@
   "aliasName": "gm-react-app",
   "clientName": "gm-react-app",
   "description": "参考资料",
-  "version": "5.3.0-beta.3",
+  "version": "5.3.0-beta.4",
   "main": "webpack.config.backup.js",
   "repository": {
     "type": "git",
@@ -21,7 +21,6 @@
     "start": "gras start",
     "build:test": "gras test",
     "build:prod": "gras build",
-    "version": "lerna version --force-publish --yes",
     "release": "bumpp"
   },
   "lint-staged": {
